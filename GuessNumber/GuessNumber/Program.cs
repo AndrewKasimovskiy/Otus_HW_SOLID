@@ -1,72 +1,48 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using GuessNumber.GameLib;
+using GuessNumber.GameLib.Impl;
+using GuessNumber.NumberGeneratorLib;
+using GuessNumber.NumberGeneratorLib.Impl;
+using GuessNumber.UserInteractionLib;
+using GuessNumber.UserInteractionLib.Impl;
+using Microsoft.Extensions.Configuration;
 
 namespace GuessNumber;
 
 internal class Program
 {
+	private IUserInteraction? userInteraction;
 	static void Main(string[] args)
 	{
-		//int try_count = 3;
-		//int lowerValue = 0;
-		//int upperValue = 10;
+		IValidator validator = new Validator();
+		IUserInteraction userInteraction = new UserConsoleInteraction();
+		
+		var gameLauncher = GetGameLauncher(userInteraction, validator);
+		var numberGenerator = GetNumberGenerator();
 
-		IConfiguration config = new ConfigurationBuilder()
-			.AddJsonFile("appsettings.json", true, true)
-			.Build();
+		IGame game = new Game(gameLauncher, numberGenerator, userInteraction, validator);
+		bool gameResult = game.StartGame();
 
-		var parametr1 = config["NumberOfAttempts"];
-		if(!int.TryParse(parametr1, out int numberOfAttempts))
+		if (gameResult)
+			userInteraction.WriteMessage("Поздравляем! Вы угадали загаданное число!");
+		else
+			userInteraction.WriteMessage("Увы, но вы не смоги отгадать число и потратили все попытки.");
+	}
+
+	static IGameLauncher GetGameLauncher(IUserInteraction userInteraction, IValidator validator)
+	{
+		string filePath = Directory.GetCurrentDirectory() + @"\appsettings.json";
+		if (File.Exists(filePath))
 		{
-			throw new ArgumentException(nameof(parametr1));
-		}
-
-		var parametr2 = config["LowerValue"];
-		if (!int.TryParse(parametr2, out int lowerValue))
-		{
-			throw new ArgumentException(nameof(parametr2));
-		}
-
-		var parametr3 = config["UpperValue"];
-		if (!int.TryParse(parametr3, out int upperValue))
-		{
-			throw new ArgumentException(nameof(parametr3));
-		}
-
-		Random random = new Random();
-
-		int hiddenNumber = random.Next(lowerValue, upperValue + 1);
-		Console.WriteLine($"Загаданное число лежит в диапазоне от {lowerValue} до {upperValue} включительно."
-			+ $"\nУ вас есть {numberOfAttempts} попытки чтобы отгадать его.");
-
-		while (numberOfAttempts > 0)
-		{
-			Console.Write("Введите число, что бы угадать его: ");
-			int tryNumber = int.Parse(Console.ReadLine() ?? "");
-			if(tryNumber == hiddenNumber)
-			{
-				break;
-			}
-			else
-			{
-				numberOfAttempts--;
-				if(tryNumber < hiddenNumber)
-				{
-					Console.WriteLine("Загаданное число больше вашего");
-				}
-				else
-				{
-					Console.WriteLine("Загаданное число меньше вашего");
-				}
-			}
-		}
-
-		if (numberOfAttempts > 0)
-		{
-			Console.WriteLine($"Поздравляем! Вы угадали, это число {hiddenNumber}");
+			return new ConfigurationGameLauncher(filePath, new ConfigurationBuilder(), userInteraction, validator);
 		}
 		else
 		{
-			Console.WriteLine($"К сожалению вы израсходовали все попытки. Загаданное число {hiddenNumber}");
+			return new ManualGameLauncher(userInteraction, validator);
 		}
+	}
+
+	static INumberGenerator GetNumberGenerator()
+	{
+		return new SimpleNumberGenerator();
 	}
 }

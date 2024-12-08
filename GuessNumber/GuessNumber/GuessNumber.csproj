@@ -14,6 +14,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\GuessNumber.GameLib.Impl\GuessNumber.GameLib.Impl.csproj" />
+    <ProjectReference Include="..\GuessNumber.NumberGeneratorLib.Impl\GuessNumber.NumberGeneratorLib.Impl.csproj" />
+    <ProjectReference Include="..\GuessNumber.UserInteractionLib.Impl\GuessNumber.UserInteractionLib.Impl.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
